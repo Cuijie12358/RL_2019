@@ -1,0 +1,50 @@
+from MDP import MDP
+import numpy as np
+
+class BellmanDPSolver(object):
+	def __init__(self,discountRate=1):
+		self.MDP = MDP()
+		self.discountRate = discountRate
+		self.PolicyImprovement = {}
+		self.GreedyPolicy={}
+		self.Vs = {}
+		self.Vs_next = {}
+
+
+	def initVs(self):
+		for i in self.MDP.S:
+			self.Vs[i] = 0
+			self.Vs_next[i] = 0
+			self.GreedyPolicy[i] = []
+		for i in self.A:
+			self.PolicyImprovement[i] = 0
+
+
+	def BellmanUpdate(self):
+		for i in self.MDP.S:
+			for j in self.MDP.A:
+				nextStateProbs = self.MDP.probNextStates(i,j)
+				if "GOAL" in nextStateProbs:
+					self.PolicyImprovement[j] = self.MDP.getRewards(i, j, "GOAL") + self.Vs["GOAL"]*self.discountRate
+				elif: "OUT" in nextStateProbs:
+					self.PolicyImprovement[j] = self.MDP.getRewards(i, j, "GOAL") + self.Vs["OUT"]*self.discountRate
+				else:
+					nextState = np.random.choice(list(nextStateProbs.keys()),1,p=list(nextStateProbs.values()))
+					self.PolicyImprovement[j] = self.MDP.getRewards(i,j,nextState) + self.Vs[nextState]*self.discountRate
+			self.GreedyPolicy[i] = self.MDP.A[np.argmax(self.PolicyImprovement)]
+			self.Vs_next[i] = self.MDP.A[np.where(self.PolicyImprovement==np.max(self.PolicyImprovement))]
+		self.Vs = self.Vs_next[:]
+		return self.Vs, self.GreedyPolicy
+
+
+		
+		
+
+
+
+if __name__ == '__main__':
+	solution = BellmanDPSolver()
+	for i in range(20000):
+		values, policy = solution.BellmanUpdate()
+	print("Values : ", values)
+	print("Policy : ", policy)
