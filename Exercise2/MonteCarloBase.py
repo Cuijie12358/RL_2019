@@ -24,7 +24,10 @@ class MonteCarloAgent(Agent):
 
 
 	def learn(self):
-
+		'''
+		Since the order of the action is fixed, we can use the index of the list to represent different actions of the agent.
+		We don't need to use the complex dictionarys value type in the dictionary.
+		'''
 		list_Q_now=[]
 		self.episode.reverse()
 		episode_np = np.array(self.episode)
