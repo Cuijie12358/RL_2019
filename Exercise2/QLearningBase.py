@@ -5,6 +5,9 @@ from DiscreteHFO.HFOAttackingPlayer import HFOAttackingPlayer
 from DiscreteHFO.Agent import Agent
 import argparse
 import numpy as np
+import logging
+import logging.config
+from hfo import *
 
 class QLearningAgent(Agent):
 	def __init__(self, learningRate, discountFactor, epsilon, initVals=0.0):
@@ -18,7 +21,7 @@ class QLearningAgent(Agent):
 		self.Q_target = 0
 
 
-		
+
 
 	def learn(self):
 		if self.status != 0:
@@ -47,11 +50,11 @@ class QLearningAgent(Agent):
 	def setState(self, state):
 		self.state = state
 		if state not in self.Q_table.keys():
-			self.Q_table[state] = np.ones(5)*self.initVals		
+			self.Q_table[state]= np.ones(len(self.possibleActions))*self.initVals
 
 	def setExperience(self, state, action, reward, status, nextState):
 		if nextState not in self.Q_table.keys():
-			self.Q_table[nextState] = np.ones(5)*self.initVals
+			self.Q_table[nextState] = np.ones(len(self.possibleActions))*self.initVals
 		self.action = action
 		self.reward = reward
 		self.status = status
@@ -74,14 +77,16 @@ class QLearningAgent(Agent):
 		
 	def computeHyperparameters(self, numTakenActions, episodeNumber):
 		self.episode_num = episodeNumber
-		if numTakenActions < 10:
+		if episodeNumber < 500:
 			epsilon = 1
 		else:
-			epsilon = 1.0/(numTakenActions//10)
+			# epsilon = 1.0/(numTakenActions/100)
+		# 	epsilon = 10/9. - episodeNumber / 4500
 		# if numTakenActions < 30 :
-		# 	epsilon = min(1,1-(episodeNumber-100)/100.0)
+		# 	epsilon = min(1,1-(numTakenActions-100)/100.0)
 		# else:
 		# 	epsilon = min(1,1-(episodeNumber-100)/100.0)/(numTakenActions//10)
+			epsilon = 1. * ((1 - 1 / (1 + np.exp(-numTakenActions / 250))) * 2 * 0.8 + 0.1)
 		learningRate = self.alpha
 
 		return learningRate, epsilon			
@@ -93,7 +98,7 @@ if __name__ == '__main__':
 	parser.add_argument('--id', type=int, default=0)
 	parser.add_argument('--numOpponents', type=int, default=0)
 	parser.add_argument('--numTeammates', type=int, default=0)
-	parser.add_argument('--numEpisodes', type=int, default=500)
+	parser.add_argument('--numEpisodes', type=int, default=5000)
 
 	args=parser.parse_args()
 
@@ -106,7 +111,10 @@ if __name__ == '__main__':
 	numEpisodes = args.numEpisodes
 
 	# Run training using Q-Learning
-	numTakenActions = 0 
+	numTakenActions = 0
+	logging.config.fileConfig('logconfig.ini')
+	list_status = np.zeros(6)
+
 	for episode in range(numEpisodes):
 		status = 0
 		observation = hfoEnv.reset()
@@ -124,6 +132,14 @@ if __name__ == '__main__':
 			nextObservation, reward, done, status = hfoEnv.step(action)
 			agent.setExperience(agent.toStateRepresentation(obsCopy), action, reward, status, agent.toStateRepresentation(nextObservation))
 			update = agent.learn()
-			
+
+
+			if episode>4500:
+				list_status[status] += 1
+				if episode % 50 ==0:
+					logging.info("GOAL:%d, CAPTURED_BY_DEFENSE:%d, OUT_OF_BOUNDS:%d, OUT_OF_TIME:%d, SERVER_DOWN:%d, RATE = %f",
+							 list_status[hfo.GOAL], list_status[hfo.CAPTURED_BY_DEFENSE], list_status[hfo.OUT_OF_BOUNDS],
+							 list_status[hfo.OUT_OF_TIME], list_status[hfo.SERVER_DOWN], list_status[hfo.GOAL] / (episode-4500))
+
 			observation = nextObservation
 	

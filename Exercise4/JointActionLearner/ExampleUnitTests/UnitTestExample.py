@@ -75,7 +75,6 @@ if __name__ == '__main__':
 				agents[agentIdx].setExperience(agents[agentIdx].toStateRepresentation(stateCopies[agentIdx]), actions[agentIdx], oppoActions, 
 					reward, status, agent.toStateRepresentation(nextObservation))
 				learnResult = agents[agentIdx].learn()
-
 				if not math.isclose(learnResult, float(outputData[timeSteps+1][agentIdx+1]), abs_tol=1e-5):
 					print("Wrong Output")
 					exit()

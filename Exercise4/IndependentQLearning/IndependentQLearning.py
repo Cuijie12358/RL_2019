@@ -7,34 +7,88 @@ from DiscreteMARLUtils.Environment import DiscreteMARLEnvironment
 from DiscreteMARLUtils.Agent import Agent
 from copy import deepcopy
 import argparse
+import numpy as np
+
 		
 class IndependentQLearningAgent(Agent):
 	def __init__(self, learningRate, discountFactor, epsilon, initVals=0.0):
 		super(IndependentQLearningAgent, self).__init__()
+		self.gamma = discountFactor
+		self.setEpsilon(epsilon)
+		self.setLearningRate(learningRate)
+		self.Q_table = {}
+		self.alpha = learningRate
+		self.initVals = initVals
+		self.Q_target = 0
 
 	def setExperience(self, state, action, reward, status, nextState):
-		raise NotImplementedError
-	
+		self.action = action
+		self.reward = reward
+		self.status = status
+		self.nextState = nextState[0]
+		self.state = state[0]
+		if nextState not in self.Q_table.keys():
+			self.Q_table[self.nextState] = np.ones(len(self.possibleActions))*self.initVals
+
+
 	def learn(self):
-		raise NotImplementedError
+		if self.status != 0:
+			self.Q_target = self.reward
+		else:
+			self.Q_target = self.reward + self.gamma * self.Q_table[self.nextState].max()  # next state is not terminal
+		difference = self.Q_target - self.Q_table[self.state][self.possibleActions.index(self.action)]
+		self.Q_table[self.state][self.possibleActions.index(self.action)] += self.alpha * difference
+		return self.alpha * difference
 
 	def act(self):
-		raise NotImplementedError
+		if np.random.rand() < self.epsilon:
+			action = np.random.choice(self.possibleActions)
+			return action
+		else:
+			actionlist = self.Q_table[self.state]
+			action = self.possibleActions[np.random.choice(np.where(actionlist==np.max(actionlist))[0])]
+			return action
+
 
 	def toStateRepresentation(self, state):
-		raise NotImplementedError
+		list_state = []
+		tuple_state = []
+		for i in state[0]:
+			list_state.append(tuple(i))
+		tuple_state.append(tuple(list_state[:]))
+		for i in range(len(state)-1):
+			tuple_state.append(tuple(state[i+1][0]))
+		return tuple(tuple_state)
+
 
 	def setState(self, state):
-		raise NotImplementedError
+		self.state = state[0]
+		# print(self.state)
+		if state not in self.Q_table.keys():
+			self.Q_table[self.state] = np.ones(len(self.possibleActions)) * self.initVals
+		# print(self.Q_table.keys())
 
 	def setEpsilon(self, epsilon):
-		raise NotImplementedError
+		self.epsilon = epsilon
+
 		
 	def setLearningRate(self, learningRate):
-		raise NotImplementedError
+		self.alpha = learningRate
+
 		
 	def computeHyperparameters(self, numTakenActions, episodeNumber):
-		raise NotImplementedError
+		self.episode_num = episodeNumber
+		if numTakenActions < 10:
+			epsilon = 1
+		else:
+			epsilon = 1.0/(numTakenActions//10)
+		# if numTakenActions < 30 :
+		# 	epsilon = min(1,1-(episodeNumber-100)/100.0)
+		# else:
+		# 	epsilon = min(1,1-(episodeNumber-100)/100.0)/(numTakenActions//10)
+		learningRate = self.alpha
+
+		return learningRate, epsilon
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
@@ -67,9 +121,16 @@ if __name__ == '__main__':
 			stateCopies = []
 			for agentIdx in range(args.numAgents):
 				obsCopy = deepcopy(observation[agentIdx])
+				# print(obsCopy)
+				# print(isinstance(obsCopy,list))
+
 				stateCopies.append(obsCopy)
+
 				agents[agentIdx].setState(agent.toStateRepresentation(obsCopy))
+
 				actions.append(agents[agentIdx].act())
+
+
 			numTakenActions += 1
 			nextObservation, reward, done, status = MARLEnv.step(actions)
 

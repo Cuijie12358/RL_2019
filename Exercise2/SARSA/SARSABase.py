@@ -42,13 +42,13 @@ class SARSAAgent(Agent):
 	def setState(self, state):
 		self.state = state
 		if state not in self.Q_table.keys():
-			self.Q_table[state] = np.ones(5)*self.initVals
+			self.Q_table[state] = np.ones(len(self.possibleActions))*self.initVals
 
 	def setExperience(self, state, action, reward, status, nextState):
 		self.episode.append([state, action, reward])
 		if nextState != None:
 			if nextState not in self.Q_table.keys():
-				self.Q_table[nextState] = np.ones(5)*self.initVals
+				self.Q_table[nextState] = np.ones(len(self.possibleActions))*self.initVals
 
 
 

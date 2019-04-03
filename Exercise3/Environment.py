@@ -81,11 +81,38 @@ class HFOEnv(object):
 	# for monitoring purposes.
 	
 	def get_reward(self, status, nextState):
+		'''
+		:param status: if goal, reward equals one.
+		:param nextState:
+		:return: reward
+		'''
+		if status == hfo.GOAL:
+			totalReward = 1
+		else:
+			totalReward = 0
 
-		reward = 0.0
+
+
+
+		# if nextState[0] == "GOAL":
+		# 	#print("Prev State :", status)
+		# 	opponentLocs = status[0][1]
+		# 	agentLocs = status[0][0]
+		# 	totalReward += 1
+		#
+		# if nextState[0] != "GOAL" and nextState[0] != "OUT_OF_BOUNDS":
+		# 	ballLoc = nextState[0][-1][0]
+		# 	opponentLocs = nextState[0][1]
+		#
+		# 	if ballLoc in opponentLocs:
+		# 		totalReward -= self.collisionPenalty
+		#
+		# return [totalReward]*self.agentNums
+
+		# reward = 0.0
 		info = {}
 
-		return reward, info
+		return totalReward, info
 
 	# Method that serves as an interface between a script controlling the agent
 	# and the environment. Method returns the nextState, reward, flag indicating
