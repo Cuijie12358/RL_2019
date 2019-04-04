@@ -2,6 +2,8 @@
 #encoding utf-8
 
 from hfo import *
+import torch
+from torch.autograd import Variable
 from copy import copy, deepcopy
 import math
 import random
@@ -86,32 +88,20 @@ class HFOEnv(object):
 		:param nextState:
 		:return: reward
 		'''
-		if status == hfo.GOAL:
-			totalReward = 1
-		else:
-			totalReward = 0
+		totalReward = 0
+		# print("nextState",nextState)
 
+		info = ''
 
+		if status == GOAL:
+			totalReward += 1
+			info = 'GOAL'
 
-
-		# if nextState[0] == "GOAL":
-		# 	#print("Prev State :", status)
-		# 	opponentLocs = status[0][1]
-		# 	agentLocs = status[0][0]
-		# 	totalReward += 1
-		#
-		# if nextState[0] != "GOAL" and nextState[0] != "OUT_OF_BOUNDS":
-		# 	ballLoc = nextState[0][-1][0]
-		# 	opponentLocs = nextState[0][1]
-		#
-		# 	if ballLoc in opponentLocs:
-		# 		totalReward -= self.collisionPenalty
-		#
-		# return [totalReward]*self.agentNums
-
-		# reward = 0.0
-		info = {}
-
+		# if nextState != 'GOAL' and nextState != 'OUT_OF_BOUNDS':
+		# 	for index in range(1, len(nextState)):
+		# 		if nextState[0] == nextState[index]:
+		# 			totalReward -= 0
+		# 			break
 		return totalReward, info
 
 	# Method that serves as an interface between a script controlling the agent
@@ -131,6 +121,8 @@ class HFOEnv(object):
 
 	# Preprocess the state representation in this function
 	def preprocessState(self, state):
+		state = Variable(torch.from_numpy(np.array([state])))
+		# print(state)
 		return state
 
 
